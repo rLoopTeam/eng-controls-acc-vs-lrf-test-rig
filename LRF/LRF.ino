@@ -17,6 +17,11 @@
 int byteRead = 0;
 int i = 0;
 int data = 0;
+int prev_dist = 0;
+int current_dist = 0;
+float delta = 0;
+float dt = 50.0/1000.0;
+float velocity = 0.0;
 bool started = false;
 String str;
 String control;
@@ -25,33 +30,38 @@ void setup() {
   Serial.begin(9600);
   Serial3.begin(9600);
   delay(100);
-
-
+  
   Serial3.write(0x1B);
   Serial3.write(0x4F);
   Serial3.write(0x31);
   Serial3.write(0xD);
+
 }
 
 void loop() {
   if(!started) {
-    Serial3.write(0x1B);
-    Serial3.write(0x4F);
-    Serial3.write(0x31);
-    Serial3.write(0xD);
+  Serial3.write(0x1B);
+  Serial3.write(0x4F);
+  Serial3.write(0x31);
+  Serial3.write(0xD);
     delay(10);
-  }
 
+  }
   Serial3.write(0x1B);
   Serial2.write(0x4D);
   Serial3.write(0x31);
   Serial3.write(0xD);
-  delay(10);
+    delay(10);
+
+
+//  Serial3.write(0x1B);
+//  Serial3.write(0x6D);
+//  Serial3.write(0xD);
 
   Serial3.write(0x1B);
   Serial3.write(0x63);
   Serial3.write(0xD);
-  delay(10);
+    delay(10);
 
   started = true;
 
@@ -65,9 +75,14 @@ void loop() {
         byteRead = Serial3.read();
         str += char(byteRead);
       }
-      data = str.toInt();
-      Serial.println(data);
+      current_dist = str.toInt();
+      delta = prev_dist - current_dist;
+      velocity = delta*dt;
+      prev_dist = current_dist;
+      Serial.println(velocity);
+
     }
   }
-    delay(500);
+    delay(50);
+
 }
