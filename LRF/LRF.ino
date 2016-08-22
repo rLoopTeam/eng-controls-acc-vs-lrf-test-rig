@@ -1,6 +1,6 @@
 /*
  * Laser range finder code for the accelerometer test rig
- * By Paul L (mightyboat)
+ * By Paul L (mightyboat) & Mila A (scrappymacgyver)
  * -------------------------------------------------------
  * LRF useful parameters
  * 0x1B - esc - go in configruation mode
@@ -14,45 +14,60 @@
  *  - 0    OFF
  */
 
-bool started = false;
 int byteRead = 0;
-int CMD_LASER_ON[3] = {2, 0x4F, 0x1};       //turn laser off
-int CMD_LASER_OFF[3] = {2, 0x4F, 0x0};      //turn laser on
-int CMD_CONFIG[2] = {1, 0X1b};              //config mode
-int CMD_SINGLE_READING[2] = {1, 0x63};      //get single readin
-int CMD_CONTINUOUS_READING[2] = {1, 0x43};  //get reading continuously
-int CMD_GET_ERROR[2] = {1, 0x64};           //get errors
+int i = 0;
+int data = 0;
+bool started = false;
+String str;
+String control;
 
 void setup() {                
   Serial.begin(9600);
   Serial3.begin(9600);
-  delay(10);
+  delay(100);
+
+
+  Serial3.write(0x1B);
+  Serial3.write(0x4F);
+  Serial3.write(0x31);
+  Serial3.write(0xD);
 }
 
 void loop() {
-  if (!started){
-    send_command(CMD_CONFIG);
-    send_command(CMD_LASER_ON);
-    send_command(CMD_SINGLE_READING);
+  if(!started) {
+    Serial3.write(0x1B);
+    Serial3.write(0x4F);
+    Serial3.write(0x31);
+    Serial3.write(0xD);
+    delay(10);
   }
-  
-  if (Serial3.available()) {
-    byteRead = Serial3.read();
-    Serial.print("Distance: "); Serial.println(byteRead);
-  } else {
-    //send_command(CMD_GET_ERROR);
-  }
-  started = true;
-}
 
-/*
- * Send command to laser range finder functions
- */
-void send_command(int command[]){
   Serial3.write(0x1B);
+  Serial2.write(0x4D);
+  Serial3.write(0x31);
+  Serial3.write(0xD);
+  delay(10);
+
   Serial3.write(0x1B);
-  for (int b=1; b <= command[0]; b++) {
-    Serial3.write(command[b]);
+  Serial3.write(0x63);
+  Serial3.write(0xD);
+  delay(10);
+
+  started = true;
+
+  while (Serial3.available() > 0) {
+
+    str = "";
+    byteRead = Serial3.read();
+    if (char(byteRead) == 'D') {
+      for (i=0; i<5; i++) {
+        while (Serial3.available() <= 0);
+        byteRead = Serial3.read();
+        str += char(byteRead);
+      }
+      data = str.toInt();
+      Serial.println(data);
+    }
   }
-  Serial3.write(0xD); //end command
+    delay(500);
 }
