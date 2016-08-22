@@ -48,7 +48,7 @@ void loop() {
 
   }
   Serial3.write(0x1B);
-  Serial2.write(0x4D);
+  Serial3.write(0x4D);
   Serial3.write(0x31);
   Serial3.write(0xD);
     delay(10);
