@@ -5,23 +5,33 @@
 
 Adafruit_MMA8451 mma = Adafruit_MMA8451();
 
-float x_acc = 0;
-float y_acc = 0;
+float x_acc = 0.00;
+float y_acc = 0.00;
 
-float x_cal = 0; 
-float y_cal = 0;
+float x_cal = 0.00; 
+float y_cal = 0.00;
 
-float x_vel = 0;
-float y_vel = 0;
+float x_vel = 0.00;
+float y_vel = 0.00;
 
-float x_dist = 0;
-float y_dist = 0;
+float x_dist = 0.00;
+float y_dist = 0.00;
 
-float kalman_vel_1 = 0;
-float kalman_vel_2 = 0;
+float kalman_vel_1 = 0.00;
+float kalman_vel_2 = 0.00;
 
-float kalman_dist_1 = 0;
-float kalman_dist_2 = 0;
+float kalman_dist_1 = 0.00;
+float kalman_dist_2 = 0.00;
+
+float last_millis = 0.00;
+float now_millis = 0.00;
+
+float diff = 0.00;
+float delta = 0.00;
+
+float dt = 5.1 / 1000.00;
+
+sensors_event_t event; 
 
 typedef struct {
   double q; //process noise covariance
@@ -54,7 +64,7 @@ void setup(void) {
     while (1);
   }
   
-  mma.setRange(MMA8451_RANGE_2_G);
+  mma.setRange(MMA8451_RANGE_8_G);
 
   /* do gravity calibration on startup*/
   Serial.println("Calibrating..");
@@ -66,8 +76,8 @@ void setup(void) {
 /* calibrate for gravity by taking the average of the first 100 samples */
 void calibrate() {
   int i;
-  float x_tot = 0;
-  float y_tot = 0;
+  float x_tot = 0.00;
+  float y_tot = 0.00;
   
   sensors_event_t event;
   
@@ -79,9 +89,8 @@ void calibrate() {
     delay(5);
   }
 
-  x_cal = x_tot/100;
-  y_cal = y_tot/100;
-  
+  x_cal = x_tot/100.00;
+  y_cal = y_tot/100.00;
 }
 
 void kalman_update(kalman_state* state, double measurement)
@@ -98,53 +107,41 @@ void kalman_update(kalman_state* state, double measurement)
 
 void loop() {
   /* Get a new sensor event */ 
-  sensors_event_t event; 
+  now_millis = millis();
   mma.getEvent(&event);
-
+  
   /* remove gravity calibration value from sensor value */
   x_acc = event.acceleration.x - x_cal;
   y_acc = event.acceleration.y - y_cal;
 
-  if (abs(x_acc) < 0.05 ) {
-    return;
-  }
-
-  /*
-  if (x_acc < 0){
-    x_acc = -x_acc;
-  }
-
-  if (y_acc < 0){
-    y_acc = -y_acc;
-  }
-  */
-
-  x_vel += x_acc;
-  x_dist += x_vel;
+  x_vel = x_vel + (x_acc * dt); 
+  
+  x_dist = x_dist + (x_vel * dt); 
 
   kalman_update(&k_state_1, x_acc);
   kalman_update(&k_state_2, x_acc);
 
-  kalman_vel_1 += k_state_1.x;
-  kalman_vel_2 += k_state_2.x;
+  kalman_vel_1 = kalman_vel_1 + (k_state_1.x * dt);
+  kalman_vel_2 = kalman_vel_2 + (k_state_2.x * dt);
 
-  kalman_dist_1 += kalman_vel_1;
-  kalman_dist_2 += kalman_vel_2;
+  kalman_dist_1 = kalman_dist_1 + (kalman_vel_1 * dt);
+  kalman_dist_2 = kalman_dist_2 + (kalman_vel_2 * dt);
   
   Serial.print(x_acc); Serial.print(",");
   Serial.print(y_acc); Serial.print(",");  
-  Serial.print(x_vel/200); Serial.print(",");
-  Serial.print(y_vel/200); Serial.print(",");
-  Serial.print(x_dist/200); Serial.print(",");
-  Serial.print(y_dist/200); Serial.print(","); 
+  Serial.print(x_vel); Serial.print(",");
+  Serial.print(y_vel); Serial.print(",");
+  Serial.print(x_dist); Serial.print(",");
+  Serial.print(y_dist); Serial.print(","); 
   Serial.print(k_state_1.x); Serial.print(",");
   Serial.print(k_state_2.x); Serial.print(",");
-  Serial.print(kalman_vel_1/200); Serial.print(",");
-  Serial.print(kalman_vel_2/200); Serial.print(",");
-  Serial.print(kalman_dist_1/200); Serial.print(",");
-  Serial.print(kalman_dist_2/200);
+  Serial.print(kalman_vel_1); Serial.print(",");
+  Serial.print(kalman_vel_2); Serial.print(",");
+  Serial.print(kalman_dist_1); Serial.print(",");
+  Serial.print(kalman_dist_2); Serial.print(",");
+  Serial.print(dt);
   Serial.println();
-  
+
+  last_millis = now_millis;
   delay(5);
-  
 }
