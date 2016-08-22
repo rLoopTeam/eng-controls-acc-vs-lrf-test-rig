@@ -75,11 +75,13 @@ void loop() {
         byteRead = Serial3.read();
         str += char(byteRead);
       }
-      current_dist = str.toInt();
+      current_dist = str.toInt()/1000;
       delta = prev_dist - current_dist;
       velocity = delta*dt;
       prev_dist = current_dist;
-      Serial.println(velocity);
+      Serial.print(velocity);
+      Serial.print(",");
+      Serial.println(current_dist);
 
     }
   }
