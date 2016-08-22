@@ -17,8 +17,8 @@
 int byteRead = 0;
 int i = 0;
 int data = 0;
-int prev_dist = 0;
-int current_dist = 0;
+float prev_dist = 0;
+float current_dist = 0;
 float delta = 0;
 float dt = 50.0/1000.0;
 float velocity = 0.0;
@@ -75,7 +75,7 @@ void loop() {
         byteRead = Serial3.read();
         str += char(byteRead);
       }
-      current_dist = str.toInt()/1000;
+      current_dist = str.toFloat()/1000.0;
       delta = prev_dist - current_dist;
       velocity = delta*dt;
       prev_dist = current_dist;
