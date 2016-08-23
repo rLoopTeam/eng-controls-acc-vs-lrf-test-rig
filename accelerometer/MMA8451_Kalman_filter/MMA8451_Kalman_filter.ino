@@ -1,38 +1,49 @@
-
+/*
+ * Accelerometer code for the accelerometer test rig
+ * By Joakim F (vookungdoofu)
+ * -------------------------------------------------------
+ * 
+ * Read the acceleration data from MMA8451 and integrates 
+ * velocity and distance. Uses 2 Kalman filters with diffrent
+ * parameters as an experiment too see what works well
+ * 
+ */
+ 
 #include <Wire.h>
 #include <Adafruit_MMA8451.h>
 #include <Adafruit_Sensor.h>
 
 Adafruit_MMA8451 mma = Adafruit_MMA8451();
 
+/* Raw acceleration from sensor */
 float x_acc = 0.00;
 float y_acc = 0.00;
 
+/* Gravity calibration for X and Y */
 float x_cal = 0.00; 
 float y_cal = 0.00;
 
+/* Integrated velocity from raw data */
 float x_vel = 0.00;
 float y_vel = 0.00;
 
+/* Integrated distance from raw data */
 float x_dist = 0.00;
 float y_dist = 0.00;
 
+/* Kalman filtered velocity 1 */
 float kalman_vel_1 = 0.00;
 float kalman_vel_2 = 0.00;
 
+/* Kalman filtered distance 1 */
 float kalman_dist_1 = 0.00;
 float kalman_dist_2 = 0.00;
-
-float last_millis = 0.00;
-float now_millis = 0.00;
-
-float diff = 0.00;
-float delta = 0.00;
 
 float dt = 51 / 1000.00;
 
 sensors_event_t event; 
 
+/* A "state" of the Kalman filters */
 typedef struct {
   double q; //process noise covariance
   double r; //measurement noise covariance
@@ -69,6 +80,8 @@ void setup(void) {
   /* do gravity calibration on startup*/
   Serial.println("Calibrating..");
   calibrate();
+
+  /* Set some parameters for Kalman filters. This probably needs tuning */
   k_state_1 = kalman_init(0.125, 10, 300, 0);
   k_state_2 = kalman_init(0.125, 1, 300, 0);
 }
@@ -107,26 +120,30 @@ void kalman_update(kalman_state* state, double measurement)
 
 void loop() {
   /* Get a new sensor event */ 
-  now_millis = millis();
   mma.getEvent(&event);
   
   /* remove gravity calibration value from sensor value */
   x_acc = event.acceleration.x - x_cal;
   y_acc = event.acceleration.y - y_cal;
 
+  /* Integrate velocity */
   x_vel = x_vel + (x_acc * dt); 
-  
+
+  /* Integrate distance */
   x_dist = x_dist + (x_vel * dt); 
 
+  /* This smooths the acceleration via the Kalman filters */
   kalman_update(&k_state_1, x_acc);
   kalman_update(&k_state_2, x_acc);
 
+  /* Integrate velocity and distance separately for the 2 Kalman filtered accelerations */
   kalman_vel_1 = kalman_vel_1 + (k_state_1.x * dt);
   kalman_vel_2 = kalman_vel_2 + (k_state_2.x * dt);
 
   kalman_dist_1 = kalman_dist_1 + (kalman_vel_1 * dt);
   kalman_dist_2 = kalman_dist_2 + (kalman_vel_2 * dt);
-  
+
+  /* Print all the things! */
   Serial.print(x_acc); Serial.print(",");
   Serial.print(y_acc); Serial.print(",");  
   Serial.print(x_vel); Serial.print(",");
@@ -142,6 +159,5 @@ void loop() {
   Serial.print(dt);
   Serial.println();
 
-  last_millis = now_millis;
   delay(50);
 }
