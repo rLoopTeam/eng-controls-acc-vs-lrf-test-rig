@@ -29,7 +29,7 @@ float now_millis = 0.00;
 float diff = 0.00;
 float delta = 0.00;
 
-float dt = 5.1 / 1000.00;
+float dt = 51 / 1000.00;
 
 sensors_event_t event; 
 
@@ -143,5 +143,5 @@ void loop() {
   Serial.println();
 
   last_millis = now_millis;
-  delay(5);
+  delay(50);
 }
