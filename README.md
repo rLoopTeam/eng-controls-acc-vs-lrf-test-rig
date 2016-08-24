@@ -2,7 +2,7 @@
 
 Repo for the laser-rangefinder + accelerometer test rig. 
 
-The code in /LRF should go on the Teensy connected to the laser rangefinder, and code in /accelerometer goes on the the accelerometer Teensy.
+The code in /LRF should go on the Teensy connected to the laser rangefinder, code in /accelerometer goes on the the accelerometer Teensy and code in /stepper_motors goes on the.. stepper motor teensy!
 
 /data_plot_and_read contains a Go program to read data from both sensors and synchronize it if they send data at diffrent rates (which they always seem to do even if Teensy code suggests otherwise..). It outputs a .csv file with the synchronized data that can be plotted with rcharts.py.
 
