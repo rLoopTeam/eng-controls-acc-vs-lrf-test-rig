@@ -1,3 +1,4 @@
 *.csv
 *data_read_and_plot*
 *.exe
+*.html
