@@ -10,29 +10,18 @@ import (
 )
 
 //opens a serial (USB) port. if a "port_number" is send, that port will be ignored
-func openPort(port_nr ...int) (io.ReadWriteCloser, int) {
+func openPort(port string) (io.ReadWriteCloser) {
     
-    //ACM port number changes sometimes for some reason.. try a bunch!
-    for i := 0; i<10; i++ {
-
-        //we dont want to open the same port number twice
-        if (len(port_nr) > 0 && i==port_nr[0]){
-            continue
-        }
+    //try opening serial port i
+    config := &serial.Config{Name: port, Baud: 9600}
+    usb, err := serial.OpenPort(config)
     
-        //try opening serial port i
-        ttystring := fmt.Sprintf("/dev/ttyACM%d", i)
-        config := &serial.Config{Name: ttystring, Baud: 9600}
-        usb, err := serial.OpenPort(config)
-        
-        if err != nil {
-                fmt.Println(err)
-        } else {
-            fmt.Println("Opened ", ttystring)
-            return usb, i
-        }
+    if err != nil {
+        panic(err)
+    } else {
+        fmt.Println("Opened ", port)
+        return usb
     }
-    panic("Could not open serial device 0-10") //kill the program if we cant find a serial port to open   
 }
 
 //figure out which port is the laser and which is accelerometer
@@ -115,8 +104,8 @@ func main() {
     acc_channel_data := make(chan string, 0)
 
     //open two usb ports. we use i to make sure we dont open the same port twice!
-    usb_1, port_nr := openPort()
-    usb_2, _ := openPort(port_nr)
+    usb_1 := openPort("/dev/ttyACM0")
+    usb_2 := openPort("/dev/ttyACM1")
     
     //make 2 buffered readers from serial port readers. buffered readers are easier to work with
     reader_1 := bufio.NewReader(usb_1)
